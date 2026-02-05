@@ -307,6 +307,7 @@ jobs:
           cat "$VERSION.yaml"
 
       - name: Build and Push VS dev image
+        if: matrix.arch == 'amd64'
         uses: docker/build-push-action@v6
         with:
           context: percona-version-service
