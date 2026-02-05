@@ -77,16 +77,21 @@ env:
 
 jobs:
   build:
-    name: Build
+    name: Build (${{ matrix.arch }})
     timeout-minutes: 90
 
     strategy:
       fail-fast: false
       matrix:
-        may-fail: [ false ]
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+            platform: linux/amd64
+          - arch: arm64
+            runner: ubuntu-24.04-arm64
+            platform: linux/arm64
 
-    continue-on-error: ${{ matrix.may-fail }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
 
     env:
       TOOLS_PATH: "/opt/tools/bin"
@@ -158,9 +163,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
       - name: Operator - check out
         uses: actions/checkout@v5
         with:
@@ -189,6 +191,7 @@ jobs:
           mv operator-sdk_${OS}_${ARCH} $TOOLS_PATH/operator-sdk
 
       - name: Operator - build and bundle
+        if: matrix.arch == 'amd64'
         run: |
           cd openeverest-operator
           git checkout -b $VERSION_TAG
@@ -229,7 +232,7 @@ jobs:
         with:
           context: openeverest-operator
           push: true
-          platforms: linux/arm64
+          platforms: ${{ matrix.platform }}
           tags: ${{ steps.operator_meta.outputs.tags }}
           build-args: |
             FLAGS= -X 'github.com/percona/everest-operator/internal/consts.Version=${{ env.VERSION }}'
@@ -239,11 +242,12 @@ jobs:
         with:
           context: openeverest-operator
           push: true
-          platforms: linux/arm64
+          platforms: ${{ matrix.platform }}
           tags: ${{ steps.bundle_meta.outputs.tags }}
           file: openeverest-operator/bundle.Dockerfile
 
       - name: Helm - checkout
+        if: matrix.arch == 'amd64'
         uses: actions/checkout@v5
         with:
           repository: percona/percona-helm-charts
@@ -252,16 +256,19 @@ jobs:
           token: ${{ secrets.ROBOT_TOKEN }}
 
       - name: Helm - build
+        if: matrix.arch == 'amd64'
         run: |
           cd percona-helm-charts/charts/everest
           CRD_VERSION=${{ env.VERSION_TAG }} VERSION=${{ env.VERSION }} make crds-gen link-crds
           make release-dev
 
       - name: Helm - copy chart
+        if: matrix.arch == 'amd64'
         run: |
           cp -r percona-helm-charts/charts/everest /tmp/${{ env.VERSION }}/helm-chart
 
       - name: Operator - check out again
+        if: matrix.arch == 'amd64'
         uses: actions/checkout@v5
         with:
           repository: openeverest/openeverest-operator
@@ -270,6 +277,7 @@ jobs:
           token: ${{ secrets.ROBOT_TOKEN }}
 
       - name: Operator - delete the feature build branch
+        if: matrix.arch == 'amd64'
         run: |
           cd openeverest-operator
           git push -d origin $VERSION_TAG
@@ -284,6 +292,7 @@ jobs:
 
 
       - name: VS - update
+        if: matrix.arch == 'amd64'
         run: |
           cd percona-version-service
           make init
@@ -302,7 +311,7 @@ jobs:
         with:
           context: percona-version-service
           push: true
-          platforms: linux/arm64
+          platforms: ${{ matrix.platform }}
           tags: ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_VERSION_SERVICE_DEV_IMAGE_NAME }}:${{ env.VS_TAG }}
 
 
@@ -328,7 +337,7 @@ jobs:
         with:
           context: openeverest-catalog
           push: true
-          platforms: linux/arm64
+          platforms: ${{ matrix.platform }}
           tags: ${{ steps.catalog_meta.outputs.tags }}
           file: openeverest-catalog/everest-catalog.Dockerfile
 
@@ -364,11 +373,13 @@ jobs:
           EVEREST_OUT_DIR=${GITHUB_WORKSPACE}/public/dist/ pnpm build
 
       - name: Everest - build binary
+        if: matrix.arch == 'amd64'
         run: |
           RELEASE_VERSION=${VERSION_TAG} CGO_ENABLED=0 GOOS=linux GOARCH=amd64 make rc
           RELEASE_VERSION=${VERSION_TAG} make release-cli
 
       - name: Everest - copy CLI builds
+        if: matrix.arch == 'amd64'
         run: |
           cp dist/everestctl.exe /tmp/${VERSION}/everestctl.exe
           cp dist/everestctl-darwin-amd64 /tmp/${VERSION}/everestctl-darwin-amd64
@@ -377,6 +388,7 @@ jobs:
           cp dist/everestctl-linux-arm64 /tmp/${VERSION}/everestctl-linux-arm64
 
       - name: Everest - copy feature build helper scripts
+        if: matrix.arch == 'amd64'
         run: |
           cp dev/fb/install-cli.sh /tmp/${VERSION}/install-cli.sh
           cp dev/fb/upgrade-cli.sh /tmp/${VERSION}/upgrade-cli.sh
@@ -389,21 +401,24 @@ jobs:
         with:
           context: .
           push: true
-          platforms: linux/arm64
+          platforms: ${{ matrix.platform }}
           tags: ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_SERVER_DEV_IMAGE_NAME }}:${{ env.VERSION }}
 
       - name: Create vs_tag file
+        if: matrix.arch == 'amd64'
         run: |
           echo "$VS_TAG" > /tmp/${VERSION}/vs_tag.txt
           echo "$VERSION" > /tmp/${VERSION}/version.txt
 
       - name: Version Service - create deployment manifest
+        if: matrix.arch == 'amd64'
         run: |
           curl -fsSL https://raw.githubusercontent.com/Percona-Lab/percona-version-service/main/deploy.yaml  > /tmp/${VERSION}/vs_deploy.yaml
           sed -i "s|perconalab/version-service:.*|$IMAGE_PREFIX/$EVEREST_VERSION_SERVICE_DEV_IMAGE_NAME:$VS_TAG|g" /tmp/${VERSION}/vs_deploy.yaml
           sed -i "s/replicas: [0-9]/replicas: 1/g" /tmp/${VERSION}/vs_deploy.yaml
 
       - name: Upload artifacts
+        if: matrix.arch == 'amd64'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.VERSION }}
@@ -411,6 +426,7 @@ jobs:
           retention-days: ${{ env.ARTIFACTS_RETENTION_DAYS }}
 
       - name: Info
+        if: matrix.arch == 'amd64'
         run: |
           printf "To install FB using helm:\n\
           1. Download and unzip the \`$VERSION\` artifact below.\n\
