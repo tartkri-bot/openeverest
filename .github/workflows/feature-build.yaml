@@ -76,8 +76,26 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
+  prepare:
+    name: Prepare build metadata
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.set_version.outputs.version }}
+      version_tag: ${{ steps.set_version.outputs.version_tag }}
+      vs_tag: ${{ steps.set_version.outputs.vs_tag }}
+    steps:
+      - name: Generate version
+        id: set_version
+        run: |
+          TIMESTAMP=$(date +'%Y%m%d%H%M%S')
+          V="1.10000.0-rc$TIMESTAMP"
+          echo "version=$V" >> $GITHUB_OUTPUT
+          echo "version_tag=v$V" >> $GITHUB_OUTPUT
+          echo "vs_tag=everest-test$TIMESTAMP" >> $GITHUB_OUTPUT
+
   build:
     name: Build (${{ matrix.arch }})
+    needs: prepare
     timeout-minutes: 90
 
     strategy:
@@ -131,16 +149,16 @@ jobs:
           fi
           
       - name: Set environment variables
+        id: set_env
         run: |
           echo "ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')" | tee -a $GITHUB_ENV
           echo "OS=$(uname | awk '{print tolower($0)}')" | tee -a $GITHUB_ENV
           echo "VS_URL=http://localhost:$VS_PORT" | tee -a $GITHUB_ENV
           
-          TIMESTAMP=$(date +'%Y%m%d%H%M%S')
-          V="1.10000.0-rc$TIMESTAMP"
-          echo "VERSION=$V" | tee -a $GITHUB_ENV
-          echo "VERSION_TAG=v$V" | tee -a $GITHUB_ENV
-          echo "VS_TAG=everest-test$TIMESTAMP" | tee -a $GITHUB_ENV
+          # Use version from prepare job
+          echo "VERSION=${{ needs.prepare.outputs.version }}" | tee -a $GITHUB_ENV
+          echo "VERSION_TAG=${{ needs.prepare.outputs.version_tag }}" | tee -a $GITHUB_ENV
+          echo "VS_TAG=${{ needs.prepare.outputs.vs_tag }}" | tee -a $GITHUB_ENV
 
           # Fall back to default branch if the specified branch does not exist
           git ls-remote --heads --exit-code --quiet https://github.com/Percona-Lab/percona-version-service.git $VS_BRANCH > /dev/null || echo "VS_BRANCH=production" | tee -a $GITHUB_ENV
@@ -216,7 +234,7 @@ jobs:
           images: |
             ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_OPERATOR_DEV_IMAGE_NAME }}
           tags: |
-            type=raw,value=${{ env.VERSION }}
+            type=raw,value=${{ env.VERSION }}-${{ matrix.arch }}
 
       - name: Operator - setup Docker meta for openeverest-operator-bundle
         id: bundle_meta
@@ -225,7 +243,7 @@ jobs:
           images: |
             ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_OPERATOR_BUNDLE_DEV_IMAGE_NAME }}
           tags: |
-            type=raw,value=${{ env.VERSION }}
+            type=raw,value=${{ env.VERSION }}-${{ matrix.arch }}
 
       - name: Operator - push openeverest-operator image
         uses: docker/build-push-action@v6
@@ -316,7 +334,7 @@ jobs:
           push: true
           provenance: false
           platforms: ${{ matrix.platform }}
-          tags: ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_VERSION_SERVICE_DEV_IMAGE_NAME }}:${{ env.VS_TAG }}
+          tags: ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_VERSION_SERVICE_DEV_IMAGE_NAME }}:${{ env.VS_TAG }}-${{ matrix.arch }}
 
 
       - name: Catalog - checkout
@@ -334,7 +352,7 @@ jobs:
           images: |
             ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_CATALOG_DEV_IMAGE_NAME }}
           tags: |
-            type=raw,value=${{ env.VERSION }}
+            type=raw,value=${{ env.VERSION }}-${{ matrix.arch }}
 
       - name: Catalog - push openeverest-catalog image
         uses: docker/build-push-action@v6
@@ -407,7 +425,7 @@ jobs:
           push: true
           provenance: false
           platforms: ${{ matrix.platform }}
-          tags: ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_SERVER_DEV_IMAGE_NAME }}:${{ env.VERSION }}
+          tags: ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_SERVER_DEV_IMAGE_NAME }}:${{ env.VERSION }}-${{ matrix.arch }}
 
       - name: Create vs_tag file
         if: matrix.arch == 'amd64'
@@ -448,6 +466,51 @@ jobs:
           printf "To clean up the environment after a FB:\n\
           1. Delete VS: \`kubectl delete deployment percona-version-service && kubectl delete svc percona-version-service\`\n\
           2. Uninstall Everest using the FB everestctl build: \`./<everestctl-OS-ARCH> uninstall --assume-yes --force\` \n" >> "$GITHUB_STEP_SUMMARY"
+
+  create-manifests:
+    name: Create multi-arch manifests
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_PREFIX: 'ghcr.io/openeverest'
+      VERSION: ${{ needs.prepare.outputs.version }}
+      VS_TAG: ${{ needs.prepare.outputs.vs_tag }}
+
+    steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create and push multi-arch manifests
+        run: |
+          # Operator
+          docker buildx imagetools create -t $IMAGE_PREFIX/openeverest-operator-dev:$VERSION \
+            $IMAGE_PREFIX/openeverest-operator-dev:$VERSION-amd64 \
+            $IMAGE_PREFIX/openeverest-operator-dev:$VERSION-arm64
+          
+          # Operator Bundle
+          docker buildx imagetools create -t $IMAGE_PREFIX/openeverest-operator-bundle-dev:$VERSION \
+            $IMAGE_PREFIX/openeverest-operator-bundle-dev:$VERSION-amd64 \
+            $IMAGE_PREFIX/openeverest-operator-bundle-dev:$VERSION-arm64
+          
+          # Version Service (AMD64 only)
+          docker buildx imagetools create -t $IMAGE_PREFIX/version-service-dev:$VS_TAG \
+            $IMAGE_PREFIX/version-service-dev:$VS_TAG-amd64
+          
+          # Catalog
+          docker buildx imagetools create -t $IMAGE_PREFIX/openeverest-catalog-dev:$VERSION \
+            $IMAGE_PREFIX/openeverest-catalog-dev:$VERSION-amd64 \
+            $IMAGE_PREFIX/openeverest-catalog-dev:$VERSION-arm64
+          
+          # Everest
+          docker buildx imagetools create -t $IMAGE_PREFIX/openeverest-dev:$VERSION \
+            $IMAGE_PREFIX/openeverest-dev:$VERSION-amd64 \
+            $IMAGE_PREFIX/openeverest-dev:$VERSION-arm64
 
 # Enable to debug workflow execution
 #      - name: "Setup tmate session"
