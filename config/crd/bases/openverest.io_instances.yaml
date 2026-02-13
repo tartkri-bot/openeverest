@@ -4,21 +4,20 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.18.0
-  name: workloads.everest.percona.com
+  name: instances.openverest.io
 spec:
-  group: everest.percona.com
+  group: openverest.io
   names:
-    kind: Workload
-    listKind: WorkloadList
-    plural: workloads
+    kind: Instance
+    listKind: InstanceList
+    plural: instances
     shortNames:
-    - wl
-    - wld
-    - wload
-    singular: workload
+    - in
+    - inst
+    singular: instance
   scope: Namespaced
   versions:
-  - name: v2alpha1
+  - name: v1alpha1
     schema:
       openAPIV3Schema:
         properties:

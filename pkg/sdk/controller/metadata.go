@@ -18,7 +18,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
-	"github.com/openeverest/openeverest/v2/pkg/apis/v2alpha1"
+	"github.com/openeverest/openeverest/v2/pkg/apis/v1alpha1"
 )
 
 // =============================================================================
@@ -88,55 +88,55 @@ type TopologyComponentMeta struct {
 
 // ToProviderCR converts ProviderMetadata to a Provider custom resource.
 // This is used by the CLI tool to generate YAML manifests.
-func (m *ProviderMetadata) ToProviderCR(name, namespace string) *v2alpha1.Provider {
-	provider := &v2alpha1.Provider{
+func (m *ProviderMetadata) ToProviderCR(name, namespace string) *v1alpha1.Provider {
+	provider := &v1alpha1.Provider{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "everest.percona.com/v2alpha1",
+			APIVersion: "everest.percona.com/v1alpha1",
 			Kind:       "Provider",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
-		Spec: v2alpha1.ProviderSpec{
-			ComponentTypes: make(map[string]v2alpha1.ComponentType),
-			Components:     make(map[string]v2alpha1.Component),
-			Topologies:     make(map[string]v2alpha1.Topology),
+		Spec: v1alpha1.ProviderSpec{
+			ComponentTypes: make(map[string]v1alpha1.ComponentType),
+			Components:     make(map[string]v1alpha1.Component),
+			Topologies:     make(map[string]v1alpha1.Topology),
 		},
 	}
 
 	// Convert component types
 	for typeName, typeMeta := range m.ComponentTypes {
-		versions := make([]v2alpha1.ComponentVersion, 0, len(typeMeta.Versions))
+		versions := make([]v1alpha1.ComponentVersion, 0, len(typeMeta.Versions))
 		for _, v := range typeMeta.Versions {
-			versions = append(versions, v2alpha1.ComponentVersion{
+			versions = append(versions, v1alpha1.ComponentVersion{
 				Version: v.Version,
 				Image:   v.Image,
 				Default: v.Default,
 			})
 		}
-		provider.Spec.ComponentTypes[typeName] = v2alpha1.ComponentType{
+		provider.Spec.ComponentTypes[typeName] = v1alpha1.ComponentType{
 			Versions: versions,
 		}
 	}
 
 	// Convert components
 	for compName, compMeta := range m.Components {
-		provider.Spec.Components[compName] = v2alpha1.Component{
+		provider.Spec.Components[compName] = v1alpha1.Component{
 			Type: compMeta.Type,
 		}
 	}
 
 	// Convert topologies
 	for topoName, topoMeta := range m.Topologies {
-		components := make(map[string]v2alpha1.TopologyComponent)
+		components := make(map[string]v1alpha1.TopologyComponent)
 		for compName, compMeta := range topoMeta.Components {
-			components[compName] = v2alpha1.TopologyComponent{
+			components[compName] = v1alpha1.TopologyComponent{
 				Optional: compMeta.Optional,
 				// Defaults: compMeta.Defaults,
 			}
 		}
-		provider.Spec.Topologies[topoName] = v2alpha1.Topology{
+		provider.Spec.Topologies[topoName] = v1alpha1.Topology{
 			Components: components,
 		}
 	}
@@ -260,8 +260,8 @@ func OptionalComponent() TopologyComponentMeta {
 //	func SyncDatabase(c *Context) error {
 //	    metadata := MyProviderMetadata()
 //
-//	    // Get the engine component from the workload spec
-//	    engine := c.Workload().Spec.Components["engine"]
+//	    // Get the engine component from the instance spec
+//	    engine := c.Instance().Spec.Components["engine"]
 //
 //	    // Look up the default image for the component's type
 //	    image := metadata.GetDefaultImage(engine.Type)
@@ -277,7 +277,7 @@ func OptionalComponent() TopologyComponentMeta {
 // TYPICAL PATTERN:
 //
 //	// User specifies a component with a type (e.g., "mongod")
-//	component := c.Workload().Spec.Components["engine"]
+//	component := c.Instance().Spec.Components["engine"]
 //
 //	// Determine which image to use
 //	var image string
