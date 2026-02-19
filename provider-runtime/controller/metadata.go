@@ -8,8 +8,6 @@ package controller
 //
 // The metadata is generated into a YAML manifest via CLI tooling during the
 // build process, then included in the Helm chart.
-//
-// See docs/PROVIDER_CR_GENERATION.md for the complete workflow.
 
 import (
 	"bytes"
@@ -27,7 +25,7 @@ import (
 
 // ProviderMetadata defines the metadata for a provider.
 // This includes component types, components, and topologies that the provider supports.
-// Provider developers define this in Go code, and the SDK handles converting it
+// Provider developers define this in Go code, and the controller handles converting it
 // to a Provider CR via CLI generation.
 type ProviderMetadata struct {
 	// ComponentTypes defines the available component types with their versions.

@@ -19,8 +19,6 @@ package controller
 //   - No runtime dependencies - manifest exists before deployment
 //   - Easy to inspect and debug
 //   - Works with GitOps workflows (manifest is static)
-//
-// See docs/PROVIDER_CR_GENERATION.md for complete documentation.
 
 import (
 	"fmt"
@@ -35,7 +33,7 @@ import (
 //
 //	func main() {
 //	    metadata := defineMetadata()
-//	    if err := sdk.GenerateManifest(metadata, "my-provider", "", "charts/provider.yaml"); err != nil {
+//	    if err := controller.GenerateManifest(metadata, "my-provider", "", "charts/provider.yaml"); err != nil {
 //	        log.Fatal(err)
 //	    }
 //	}

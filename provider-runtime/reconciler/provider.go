@@ -17,8 +17,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/openeverest/openeverest/v2/api/v1alpha1"
-	"github.com/openeverest/openeverest/v2/pkg/sdk/controller"
-	"github.com/openeverest/openeverest/v2/pkg/sdk/server"
+	"github.com/openeverest/openeverest/v2/provider-runtime/controller"
+	"github.com/openeverest/openeverest/v2/provider-runtime/server"
 )
 
 const finalizerName = "everest.percona.com/provider-finalizer"

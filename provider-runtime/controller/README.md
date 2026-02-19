@@ -1,6 +1,6 @@
-# SDK Controller Package
+# Controller Package
 
-This package contains the core SDK abstractions for building Everest providers.
+This package contains the core controller abstractions for building Everest providers.
 
 ## Key Files
 
@@ -42,12 +42,11 @@ Implement the `ProviderInterface` to create a provider:
 ```go
 type ProviderInterface interface {
     Name() string
-    Types() func(*runtime.Scheme) error
-    OwnedTypes() []client.Object
-    Validate(c *Context) error
-    Sync(c *Context) error
-    Status(c *Context) (Status, error)
-    Cleanup(c *Context) error
+	Types() func(*runtime.Scheme) error
+	Validate(c *Context) error
+	Sync(c *Context) error
+	Status(c *Context) (Status, error)
+	Cleanup(c *Context) error
 }
 ```
 
@@ -55,12 +54,12 @@ Use `BaseProvider` to inherit default implementations:
 
 ```go
 type MyProvider struct {
-    sdk.BaseProvider
+    controller.BaseProvider
 }
 
 func NewMyProvider() *MyProvider {
     return &MyProvider{
-        BaseProvider: sdk.BaseProvider{
+        BaseProvider: controller.BaseProvider{
             ProviderName: "mydb",
             SchemeFuncs:  []func(*runtime.Scheme) error{mydbv1.AddToScheme},
             Owned:        []client.Object{&mydbv1.MyDB{}},
@@ -69,9 +68,9 @@ func NewMyProvider() *MyProvider {
 }
 
 // Implement required methods
-func (p *MyProvider) Validate(c *sdk.Context) error { ... }
-func (p *MyProvider) Sync(c *sdk.Context) error { ... }
-func (p *MyProvider) Status(c *sdk.Context) (sdk.Status, error) { ... }
-func (p *MyProvider) Cleanup(c *sdk.Context) error { ... }
+func (p *MyProvider) Validate(c *controller.Context) error { ... }
+func (p *MyProvider) Sync(c *controller.Context) error { ... }
+func (p *MyProvider) Status(c *controller.Context) (controller.Status, error) { ... }
+func (p *MyProvider) Cleanup(c *controller.Context) error { ... }
 ```
 

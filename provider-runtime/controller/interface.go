@@ -1,11 +1,7 @@
 package controller
 
-// Provider SDK
-//
 // Implement the Provider interface to create a provider.
 // Embed BaseProvider for default implementations.
-//
-// See examples/psmdb for a complete example.
 
 import (
 	"k8s.io/apimachinery/pkg/runtime"
@@ -113,7 +109,7 @@ type WatchConfig struct {
 //	}
 type WatchProvider interface {
 	// Watches returns the list of watch configurations for this provider.
-	// This replaces OwnedTypes() when implemented - the SDK will not call OwnedTypes().
+	// This replaces OwnedTypes() when implemented - the controller will not call OwnedTypes().
 	Watches() []WatchConfig
 }
 

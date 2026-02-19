@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package openapi contains OpenAPI schema definitions and utilities for the provider SDK.
+// Package openapi contains OpenAPI schema definitions and utilities for the provider.
 // It provides pre-generated OpenAPI schemas for provider custom spec types using kube-openapi.
 //
 // This package uses the Kubernetes kube-openapi tooling for schema generation:
@@ -24,7 +24,7 @@ limitations under the License.
 //
 // Usage:
 //
-//	import "github.com/openeverest/openeverest/v2/pkg/sdk/openapi"
+//	import "github.com/openeverest/openeverest/v2/provider-runtime/openapi"
 //
 //	// Get pre-generated definitions
 //	defs := openapi.GetOpenAPIDefinitions(ref)
