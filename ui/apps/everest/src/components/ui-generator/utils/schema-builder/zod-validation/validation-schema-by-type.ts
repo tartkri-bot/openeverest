@@ -1,3 +1,17 @@
+// Copyright (C) 2026 The OpenEverest Contributors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 import {
   getZodRulesForFieldType,
   applyZodValidation,
@@ -10,9 +24,9 @@ import {
 import { z } from 'zod';
 
 export const buildNumberValidationSchema = (
-  component: Component,
-  isRequired: boolean
+  component: Component
 ): z.ZodTypeAny => {
+  const isRequired = !!component.validation?.required;
   let numberSchema: z.ZodTypeAny = z.coerce.number();
 
   // Get field-type-specific validation rules
@@ -47,6 +61,82 @@ export const buildNumberValidationSchema = (
       .pipe(z.union([z.undefined(), numberSchema]))
       .optional();
   }
+};
+
+export const buildSelectValidationSchema = (
+  component: Component
+): z.ZodTypeAny => {
+  const isRequired = !!component.validation?.required;
+  if (
+    component.uiType !== FieldType.Select ||
+    !('options' in component.fieldParams)
+  ) {
+    // Fallback to basic string validation for no options case
+    return z.string();
+  }
+
+  const optionValues = component.fieldParams.options.map((opt) => opt.value);
+  const hasDisplayEmpty = !!component.fieldParams.displayEmpty;
+
+  // This matches the auto-injected empty option in the UI
+  const allowedValues =
+    !isRequired && hasDisplayEmpty && !optionValues.includes('')
+      ? ['', ...optionValues]
+      : optionValues;
+
+  if (allowedValues.length === 0) {
+    // Fallback to basic string validation for no options case
+    return z.string();
+  }
+
+  const enumSchema = z.enum(allowedValues as [string, ...string[]]);
+
+  // For select fields, we handle regex validation in the enum refinement
+  // to ensure it applies to the selected value(s)
+  const regexValidation = component.validation?.regex as
+    | { pattern: string; message?: string }
+    | undefined;
+  const pattern = regexValidation ? new RegExp(regexValidation.pattern) : null;
+  const regexMessage = regexValidation?.message || 'Invalid format';
+
+  let baseSchema: z.ZodTypeAny;
+
+  if (isRequired) {
+    baseSchema = z.string().min(1, { message: 'Field is required' });
+
+    if (pattern) {
+      // Apply regex, then enum
+      baseSchema = baseSchema
+        .refine((val) => pattern.test(val), { message: regexMessage })
+        .refine((val) => allowedValues.includes(val), {
+          message: 'Invalid selection',
+        });
+    } else {
+      baseSchema = baseSchema.pipe(enumSchema);
+    }
+  } else {
+    baseSchema = z.union([z.string(), z.undefined()]);
+
+    if (pattern) {
+      // Apply regex and enum for non-empty values
+      baseSchema = baseSchema
+        .refine(
+          (val) => {
+            if (val === undefined || val === '') return true;
+            return pattern.test(val) && allowedValues.includes(val);
+          },
+          { message: regexMessage }
+        )
+        .optional();
+    } else {
+      baseSchema = baseSchema
+        .transform((val) => (val === '' ? undefined : val))
+        .pipe(z.union([z.undefined(), enumSchema]))
+        .optional();
+    }
+  }
+
+  return baseSchema;
 };
 
 export const buildGenericValidationSchema = (

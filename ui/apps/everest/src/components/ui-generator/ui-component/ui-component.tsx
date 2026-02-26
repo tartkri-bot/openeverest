@@ -1,12 +1,23 @@
-import { MenuItem } from '@mui/material';
-import {
-  Component,
-  FieldType,
-} from 'components/ui-generator/ui-generator.types';
+// Copyright (C) 2026 The OpenEverest Contributors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import { Component } from 'components/ui-generator/ui-generator.types';
 import React from 'react';
 import { useFormContext, get } from 'react-hook-form';
 import { muiComponentMap } from '../constants';
 import { getMappedParams } from './get-mapped-params';
+import { renderComponentChildren } from './utils/component-renderer';
 
 type ComponentByType<T extends Component['uiType']> = Extract<
   Component,
@@ -19,12 +30,6 @@ export type ComponentProps<
   item: ComponentByType<T>;
   name: string;
 };
-
-function isSelectComponent(
-  item: Component
-): item is ComponentByType<FieldType.Select> {
-  return item.uiType === FieldType.Select;
-}
 
 const UIComponent: React.FC<ComponentProps> = ({ item, name }) => {
   const { uiType, fieldParams, validation } = item;
@@ -41,13 +46,8 @@ const UIComponent: React.FC<ComponentProps> = ({ item, name }) => {
 
   const mappedProps = getMappedParams(uiType, fieldParams, validation);
 
-  const options = isSelectComponent(item)
-    ? item.fieldParams.options.map((option) => (
-        <MenuItem key={`${name}-${option.value}`} value={option.value}>
-          {option.label}
-        </MenuItem>
-      ))
-    : undefined;
+  // Render component-specific children (e.g., MenuItem options for Select)
+  const children = renderComponentChildren(item, name);
 
   return (
     <>
@@ -60,7 +60,7 @@ const UIComponent: React.FC<ComponentProps> = ({ item, name }) => {
           error: !!error,
           formControlProps: { sx: { minWidth: '450px', marginTop: '15px' } },
         },
-        options
+        children
       )}
     </>
   );

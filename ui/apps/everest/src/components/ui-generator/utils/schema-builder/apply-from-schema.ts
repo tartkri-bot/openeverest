@@ -1,3 +1,17 @@
+// Copyright (C) 2026 The OpenEverest Contributors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 import { z } from 'zod';
 import {
   Component,
@@ -8,15 +22,13 @@ import { extractCelFieldPaths } from './cel-validation';
 import {
   buildGenericValidationSchema,
   buildNumberValidationSchema,
+  buildSelectValidationSchema,
 } from './zod-validation/validation-schema-by-type';
 
 export type CelValidationData = {
   celExpValidation?: { path: string[]; celExpressions: CelExpression[] };
   celDependencyGroup?: string[];
 };
-
-const isFieldRequired = (component: Component): boolean =>
-  component.fieldParams?.required === true;
 
 const applyCommonValidations = (
   schema: z.ZodTypeAny,
@@ -25,13 +37,17 @@ const applyCommonValidations = (
 ): z.ZodTypeAny => {
   let result = schema;
 
-  if (
-    component.validation &&
+  // For select fields, regex is handled in buildSelectValidationSchema
+  // Skip regex here to avoid double-validation
+  const shouldApplyRegex =
+    component.uiType !== 'select' &&
+    component.validation !== undefined &&
     'regex' in component.validation &&
-    component.validation.regex
-  ) {
+    component.validation.regex !== undefined;
+
+  if (shouldApplyRegex && component.validation) {
     const regexValidation: { pattern: string; message?: string } =
-      component.validation.regex;
+      component.validation.regex!;
     const pattern = new RegExp(regexValidation.pattern);
     const message = regexValidation.message || 'Invalid format';
 
@@ -50,7 +66,6 @@ const applyCommonValidations = (
       .transform((val) => val);
   }
 
-  // Apply required/optional based on isRequired flag
   if (!isRequired) {
     result = result.optional();
   }
@@ -64,14 +79,17 @@ export const applyValidationFromSchema = (
   fieldId: string
 ): { fieldSchema: z.ZodTypeAny; celData: CelValidationData } => {
   let fieldSchema: z.ZodTypeAny;
-  const isRequired = isFieldRequired(component);
+  const isRequired = !!component.validation?.required;
 
   switch (component.uiType) {
     case 'number':
-      fieldSchema = buildNumberValidationSchema(component, isRequired);
+      fieldSchema = buildNumberValidationSchema(component);
       break;
 
     case 'select':
+      fieldSchema = buildSelectValidationSchema(component);
+      break;
+
     default:
       fieldSchema = buildGenericValidationSchema(component, baseSchema);
       break;

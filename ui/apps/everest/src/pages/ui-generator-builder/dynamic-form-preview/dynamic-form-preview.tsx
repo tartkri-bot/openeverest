@@ -1,3 +1,17 @@
+// Copyright (C) 2026 The OpenEverest Contributors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 import { FormProvider, useForm } from 'react-hook-form';
 import { UIGenerator } from 'components/ui-generator/ui-generator';
 import { useState, useMemo, useEffect } from 'react';
@@ -59,6 +73,11 @@ export const DynamicForm = ({ schema }: DynamicFormProps) => {
   const { trigger, control } = methods;
   useCelValidation(celDependencyGroups, control, trigger);
 
+  // Trigger validation when step changes to enable/disable submit button
+  useEffect(() => {
+    void methods.trigger();
+  }, [activeStep, methods]);
+
   return (
     <FormProvider {...methods} key={selectedTopology}>
       <Stepper
@@ -73,7 +92,7 @@ export const DynamicForm = ({ schema }: DynamicFormProps) => {
           </Step>
         ))}
       </Stepper>
-      <Stack spacing={2} sx={{ marginTop: 2 }}>
+      <Stack key="form-content" spacing={2} sx={{ marginTop: 2 }}>
         <StepHeader
           pageTitle={
             sections[stepLabels[activeStep]]?.label ??
@@ -102,10 +121,10 @@ export const DynamicForm = ({ schema }: DynamicFormProps) => {
         )}
       </Stack>
       <DatabaseFormStepControllers
+        key="form-controllers"
         disableBack={activeStep === 0}
         disableSubmit={
-          activeStep !== stepLabels.length - 1 ||
-          Object.keys(methods.formState.errors).length > 0
+          activeStep !== stepLabels.length - 1 || !methods.formState.isValid
         }
         showSubmit={activeStep === stepLabels.length - 1}
         onPreviousClick={() => setActiveStep((prev) => prev - 1)}

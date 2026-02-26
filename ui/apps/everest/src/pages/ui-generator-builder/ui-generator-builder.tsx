@@ -1,5 +1,4 @@
-// everest
-// Copyright (C) 2023 Percona LLC
+// Copyright (C) 2026 The OpenEverest Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,12 +15,12 @@
 import { Box, Paper } from '@mui/material';
 import { useState, useEffect, useRef } from 'react';
 import { JsonEditorPanel } from './json-editor-panel/json-editor-panel';
-import { DynamicForm } from './dynamic-form-preview/dynamic-form-preview';
 import schemaData from './ui-generator-schema.json';
 import { TopologyUISchemas } from '../../components/ui-generator/ui-generator.types';
 import { ErrorBoundary } from 'utils/ErrorBoundary';
 import { GenericError } from 'pages/generic-error/GenericError';
 import { ErrorContextProvider } from 'utils/ErrorBoundaryProvider';
+import { DynamicForm } from './dynamic-form-preview/dynamic-form-preview';
 
 export const UIGeneratorBuilder = () => {
   const defaultJsonText = JSON.stringify(schemaData, null, 2);
