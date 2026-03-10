@@ -2,8 +2,9 @@ REPO_ROOT=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 RELEASE_VERSION ?= v0.0.0-$(shell git rev-parse --short HEAD)
 RELEASE_FULLCOMMIT ?= $(shell git rev-parse HEAD)
 IMAGE_PREFIX ?= ghcr.io/openeverest
-EVEREST_SERVER_DEV_IMAGE_NAME ?= everest-dev
-EVEREST_OPERATOR_DEV_IMAGE_NAME ?= everest-operator-dev
+EVEREST_SERVER_DEV_IMAGE_NAME ?= openeverest-dev
+EVEREST_OPERATOR_DEV_IMAGE_NAME ?= openeverest-operator-dev
+EVEREST_CATALOG_DEV_IMAGE_NAME ?= openeverest-catalog-dev
 IMAGE_TAG ?= 0.0.0
 IMG = $(IMAGE_PREFIX)/$(EVEREST_SERVER_DEV_IMAGE_NAME):$(IMAGE_TAG)
 EVEREST_OPERATOR_IMG = $(IMAGE_PREFIX)/$(EVEREST_OPERATOR_DEV_IMAGE_NAME):$(IMAGE_TAG)
@@ -91,6 +92,10 @@ SERVER_GC_FLAGS =
 build-server-helper: GOOS = linux
 build-server-helper: GOARCH = amd64
 build-server-helper: $(LOCALBIN)
+# We need to ensure that /public/dist/index.html exists before building Everest
+# API server because it's embedded into the binary and missing file will cause
+# build failure.
+	mkdir -p ./public/dist && touch ./public/dist/index.html
 	$(info Building Everest API server for $(GOOS)/$(GOARCH) with CGO_ENABLED=$(CGO_ENABLED))
 	go build -v $(SERVER_BUILD_TAGS) $(SERVER_GC_FLAGS) -ldflags "$(SERVER_LD_FLAGS)" -o $(LOCALBIN)/everest ./cmd
 
@@ -166,14 +171,26 @@ clean:
 
 .PHONY: test
 test:                   ## Run unit tests.
+# We need to ensure that /public/dist/index.html exists before running tests
+# because it's embedded into the binary and missing file will cause test
+# failure.
+	mkdir -p ./public/dist && touch ./public/dist/index.html
 	CGO_ENABLED=1 go test -race -timeout=20m ./...
 
 .PHONY: test-cover
 test-cover:             ## Run unit tests and collect per-package coverage information.
+# We need to ensure that /public/dist/index.html exists before running tests
+# because it's embedded into the binary and missing file will cause test
+# failure.
+	mkdir -p ./public/dist && touch ./public/dist/index.html
 	CGO_ENABLED=1 go test -race -timeout=20m -count=1 -coverprofile=cover.out -covermode=atomic ./...
 
 .PHONY: test-crosscover
 test-crosscover:        ## Run unit tests and collect cross-package coverage information.
+# We need to ensure that /public/dist/index.html exists before running tests
+# because it's embedded into the binary and missing file will cause test
+# failure.
+	mkdir -p ./public/dist && touch ./public/dist/index.html
 	CGO_ENABLED=1 go test -race -timeout=20m -count=1 -coverprofile=crosscover.out -covermode=atomic -p=1 -coverpkg=./... ./...
 
 ##@ Deployment management
@@ -211,7 +228,9 @@ deploy:  ## Deploy Everest to K8S cluster using Everest CLI.
 	--helm.set server.sessionRequestsRateLimit=200 \
 	--helm.set versionMetadataURL=https://check-dev.percona.com \
 	--helm.set server.initialAdminPassword=admin \
-	--helm.set operator.init=false
+	--helm.set operator.init=false \
+	--helm.set operator.image=$(IMAGE_PREFIX)/$(EVEREST_OPERATOR_DEV_IMAGE_NAME) \
+	--helm.set olm.catalogSourceImage=$(IMAGE_PREFIX)/$(EVEREST_CATALOG_DEV_IMAGE_NAME)
 	$(MAKE) expose
 
 DEPLOY_ALL_DEPS := build-ui build-debug docker-build k3d-upload-server-image
