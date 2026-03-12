@@ -1,3 +1,17 @@
+// Copyright (C) 2026 The OpenEverest Contributors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 import { useMemo } from 'react';
 import { Divider, Drawer, Toolbar, useTheme } from '@mui/material';
 import { useActiveBreakpoint } from 'hooks/utils/useActiveBreakpoint';
@@ -5,8 +19,7 @@ import { DatabasePreview } from '../database-preview/database-preview';
 import { DatabaseFormSideDrawerProps } from './DatabaseFormSideDrawer.types';
 
 const DatabaseFormSideDrawer = ({
-  activeStep,
-  longestAchievedStep,
+  activeStepId,
   handleSectionEdit,
   disabled,
   stepsWithErrors,
@@ -18,8 +31,7 @@ const DatabaseFormSideDrawer = ({
     () => (
       <DatabasePreview
         disabled={disabled}
-        activeStep={activeStep}
-        longestAchievedStep={longestAchievedStep}
+        activeStepId={activeStepId}
         onSectionEdit={handleSectionEdit}
         stepsWithErrors={stepsWithErrors}
         sx={{
@@ -30,14 +42,7 @@ const DatabaseFormSideDrawer = ({
         }}
       />
     ),
-    [
-      disabled,
-      activeStep,
-      longestAchievedStep,
-      handleSectionEdit,
-      stepsWithErrors,
-      isDesktop,
-    ]
+    [disabled, activeStepId, handleSectionEdit, stepsWithErrors, isDesktop]
   );
 
   if (isDesktop) {

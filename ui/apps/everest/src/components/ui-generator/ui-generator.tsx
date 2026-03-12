@@ -13,20 +13,26 @@
 // limitations under the License.
 
 import React from 'react';
-import { Stack, Typography } from '@mui/material';
+import { FormGroup, Stack, Typography } from '@mui/material';
 import { Section } from './ui-generator.types';
 import { orderComponents, renderComponent } from './utils/component-renderer';
+import { UiGeneratorProvider } from './ui-generator-context';
+import { Provider } from 'types/api';
 
 type UIGeneratorProps = {
   activeStep: number;
   sections: { [key: string]: Section };
   stepLabels: string[];
+  providerObject?: Provider;
+  loadingDefaultsForEdition?: boolean;
 };
 
 export const UIGenerator = ({
   activeStep,
   sections,
   stepLabels,
+  providerObject,
+  loadingDefaultsForEdition,
 }: UIGeneratorProps) => {
   const sectionKey = stepLabels[activeStep];
   const section = sections[sectionKey];
@@ -45,18 +51,25 @@ export const UIGenerator = ({
   const basePath = sectionKey || '';
 
   return (
-    <Stack spacing={2}>
-      {orderedComponents.map(([key, item]) => {
-        const fieldName = basePath ? `${basePath}.${key}` : key;
-        return (
-          <React.Fragment key={fieldName}>
-            {renderComponent({
-              item,
-              name: fieldName,
-            })}
-          </React.Fragment>
-        );
-      })}
-    </Stack>
+    <UiGeneratorProvider
+      providerObject={providerObject}
+      loadingDefaultsForEdition={loadingDefaultsForEdition}
+    >
+      <FormGroup sx={{ mt: 3 }}>
+        <Stack spacing={2}>
+          {orderedComponents.map(([key, item]) => {
+            const fieldName = basePath ? `${basePath}.${key}` : key;
+            return (
+              <React.Fragment key={fieldName}>
+                {renderComponent({
+                  item,
+                  name: fieldName,
+                })}
+              </React.Fragment>
+            );
+          })}
+        </Stack>
+      </FormGroup>
+    </UiGeneratorProvider>
   );
 };

@@ -1,5 +1,6 @@
 // everest
 // Copyright (C) 2023 Percona LLC
+// Copyright (C) 2026 The OpenEverest Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,6 +14,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//@ts-nocheck
+// TODO remove this file after release of v2
+
 import { dbTypeToDbEngine } from '@percona/utils';
 import {
   UseMutationOptions,
@@ -24,10 +28,7 @@ import {
   createDbClusterSecretFn,
   getDbClusterCredentialsFn,
 } from 'api/dbClusterApi';
-import {
-  CUSTOM_NR_UNITS_INPUT_VALUE,
-  MIN_NUMBER_OF_SHARDS,
-} from 'components/cluster-form';
+import { MIN_NUMBER_OF_SHARDS } from 'components/cluster-form';
 import { DbWizardType } from 'pages/database-form/database-form-schema.ts';
 import {
   ClusterCredentials,
@@ -52,12 +53,7 @@ const formValuesToPayloadMapping = (
   dbPayload: DbWizardType,
   backupDataSource?: DataSource
 ): DbCluster => {
-  const numberOfNodes = parseInt(
-    dbPayload.numberOfNodes === CUSTOM_NR_UNITS_INPUT_VALUE
-      ? dbPayload.customNrOfNodes || ''
-      : dbPayload.numberOfNodes,
-    10
-  );
+  const numberOfNodes = parseInt(dbPayload.numberOfNodes);
 
   const dbClusterPayload: DbCluster = {
     apiVersion: 'everest.percona.com/v1alpha1',

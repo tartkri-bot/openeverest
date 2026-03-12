@@ -1,5 +1,6 @@
 // everest
 // Copyright (C) 2023 Percona LLC
+// Copyright (C) 2026 The OpenEverest Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,10 +28,8 @@ import {
 import { ArrowDropDownIcon } from '@mui/x-date-pickers/icons';
 import { dbEngineToDbType } from '@percona/utils';
 import { Link, useNavigate } from 'react-router-dom';
-import { useDBEnginesForDbEngineTypes } from 'hooks';
-import { useNamespacePermissionsForResource } from 'hooks/rbac';
 import { humanizeDbType } from 'utils/db';
-import { useDataImporters } from 'hooks/api/data-importers/useDataImporters';
+import { useProviders } from 'hooks/api/providers';
 
 export const CreateDbButton = ({
   createFromImport = false,
@@ -39,45 +38,63 @@ export const CreateDbButton = ({
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [showDropdownButton, setShowDropdownButton] = useState(false);
-  const { canCreate } = useNamespacePermissionsForResource('database-clusters');
+  //TODO check how it should work with Providers
+  // const { canCreate } = useNamespacePermissionsForResource('database-clusters');
 
-  const { data: availableDbImporters } = useDataImporters();
-  const supportedEngineTypesForImport = new Set(
-    availableDbImporters?.items
-      .map((importer) => importer.spec.supportedEngines)
-      .flat()
-  );
+  // const { data: availableDbImporters } = useDataImporters();
+  //TODO check how it should work with Providers
+  // const supportedEngineTypesForImport = new Set(
+  //   availableDbImporters?.items
+  //     .map((importer) => importer.spec.supportedEngines)
+  //     .flat()
+  // );
 
   const open = Boolean(anchorEl);
 
-  const [allAvailableDbTypes, availableDbTypesFetching] =
-    useDBEnginesForDbEngineTypes(undefined, {
-      refetchInterval: 30 * 1000,
-    });
+  // TODO remove after createDBCluster flow will be ready
+  // const [allAvailableDbTypes, availableDbTypesFetching] =
+  //   useDBEnginesForDbEngineTypes(undefined, {
+  //     refetchInterval: 30 * 1000,
+  //   });
 
-  const availableDbTypes = allAvailableDbTypes.filter((item) =>
-    item.dbEngines.some((engine) =>
-      createFromImport
-        ? supportedEngineTypesForImport.has(engine.dbEngine!.type)
-        : true
-    )
-  );
+  const { data: providers, isFetching: providersFetching } = useProviders();
+  const availableProviders = providers?.items || [];
 
-  const availableEngines = availableDbTypes.filter(
-    (item) =>
-      !!item.available &&
-      item.dbEngines.some((engine) => canCreate.includes(engine.namespace))
-  );
+  // TODO remove after createDBCluster flow will be ready
+  // const availableDbTypes = allAvailableDbTypes.filter((item) =>
+  //   item.dbEngines.some((engine) =>
+  //     createFromImport
+  //       ? supportedEngineTypesForImport.has(engine.dbEngine!.type)
+  //       : true
+  //   )
+  // );
+
+  // TODO remove after createDBCluster flow will be ready
+  // TODO Should be moved to the namespace field
+  // const availableEngines = availableDbTypes.filter(
+  //   (item) =>
+  //     !!item.available &&
+  //     item.dbEngines.some((engine) => canCreate.includes(engine.namespace))
+  // );
   const navigate = useNavigate();
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    if (availableEngines.length > 1) {
+    //TODO remove after v2 release
+    // const mock = {
+    //   ...availableProviders[0],
+    //   spec: {
+    //     ...availableProviders[0].spec,
+    //     uiSchema: topologyUiSchemas,
+    //   },
+    // };
+    if (availableProviders.length > 1) {
+      //TODO check how will work with several providers
       event.stopPropagation();
       setAnchorEl(event.currentTarget);
     } else {
       navigate('/databases/new', {
         state: {
-          selectedDbEngine: availableEngines[0].type,
+          selectedDbProvider: availableProviders[0],
           showImport: createFromImport,
         },
       });
@@ -88,14 +105,14 @@ export const CreateDbButton = ({
   };
 
   useEffect(() => {
-    if (availableDbTypesFetching) {
+    if (providersFetching) {
       setShowDropdownButton(false);
     } else {
       setTimeout(() => {
         setShowDropdownButton(true);
       }, 300);
     }
-  }, [availableDbTypesFetching]);
+  }, [providersFetching]);
 
   const buttonStyle = { display: 'flex', minHeight: '34px', width: '165px' };
   const skeletonStyle = {
@@ -104,7 +121,7 @@ export const CreateDbButton = ({
   };
 
   const showTechPreviewTooltip =
-    createFromImport && availableEngines.length === 1;
+    createFromImport && availableProviders.length === 1;
 
   const techPreviewText = 'Technical Preview';
 
@@ -123,13 +140,13 @@ export const CreateDbButton = ({
       aria-haspopup="true"
       aria-expanded={open ? 'true' : undefined}
       onClick={handleClick}
-      endIcon={availableEngines.length > 1 && <ArrowDropDownIcon />}
+      endIcon={availableProviders.length > 1 && <ArrowDropDownIcon />}
     >
       {createFromImport ? 'Import' : 'Create database'}
     </Button>
   );
 
-  return availableEngines.length > 0 ? (
+  return availableProviders.length > 0 ? (
     <Box>
       {showDropdownButton ? (
         showTechPreviewTooltip ? (
@@ -142,7 +159,7 @@ export const CreateDbButton = ({
       ) : (
         <Skeleton variant="rounded" sx={skeletonStyle} />
       )}
-      {availableEngines.length > 1 && (
+      {availableProviders.length > 1 && (
         <Menu
           data-testid={`${
             createFromImport ? 'import' : 'add'
@@ -176,11 +193,10 @@ export const CreateDbButton = ({
                   <Divider />
                 </>
               )}
-              {availableDbTypes.map((item) => (
+              {availableProviders.map((item) => (
                 <MenuItem
-                  data-testid={`${createFromImport ? 'import' : 'add'}-db-cluster-button-${item.type}`}
-                  disabled={!item.available}
-                  key={item.type}
+                  data-testid={`${createFromImport ? 'import' : 'add'}-db-cluster-button-${item.metadata?.name}`}
+                  key={item?.metadata?.name}
                   component={Link}
                   to="/databases/new"
                   sx={{
@@ -191,28 +207,14 @@ export const CreateDbButton = ({
                     py: '10px',
                   }}
                   state={{
-                    selectedDbEngine: item.type,
+                    selectedDbEngine: item,
                     showImport: createFromImport,
                   }}
                 >
-                  {humanizeDbType(dbEngineToDbType(item.type))}
+                  {/* TODO rewrite for provider logic*/}
+                  {humanizeDbType(dbEngineToDbType(item?.metadata?.name!))}
                 </MenuItem>
               ))}
-              {/* TODO shouldn't be duplicated with previous version of form */}
-              {/* <MenuItem
-                data-testid={`add-db-cluster-button-psmdb-generated`}
-                component={Link}
-                to="/databases/new-ui-generated"
-                sx={{
-                  display: 'flex',
-                  gap: 1,
-                  alignItems: 'center',
-                  px: 2,
-                  py: '10px',
-                }}
-              >
-                PSMDB generated
-              </MenuItem> */}
             </Box>
           }
         </Menu>

@@ -1,3 +1,20 @@
+// Copyright (C) 2026 The OpenEverest Contributors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// @ts-nocheck
+// TODO remove this file after release of v2
+
 import React, { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import {
@@ -30,7 +47,6 @@ import { useActiveBreakpoint } from 'hooks/utils/useActiveBreakpoint';
 import {
   CUSTOM_NR_UNITS_INPUT_VALUE,
   DEFAULT_CONFIG_SERVERS,
-  NODES_DEFAULT_SIZES,
   getDefaultNumberOfconfigServersByNumberOfNodes,
   humanizedResourceSizeMap,
   MIN_NUMBER_OF_SHARDS,
@@ -207,6 +223,7 @@ const ResourcesToggles = ({
       }
       setValue(memoryInputName, sizeOptions[resourceSizePerUnit].memory);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resourceSizePerUnit, allowDiskInputUpdate, setValue]);
 
   useEffect(() => {
@@ -215,6 +232,7 @@ const ResourcesToggles = ({
     } else {
       clearErrors(diskInputName);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [diskCapacityExceeded, clearErrors, setError]);
 
   useEffect(() => {
@@ -224,6 +242,7 @@ const ResourcesToggles = ({
     ) {
       setValue(resourceSizePerUnitInputName, ResourceSize.custom);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cpu, setValue]);
 
   useEffect(() => {
@@ -234,6 +253,7 @@ const ResourcesToggles = ({
     ) {
       setValue(resourceSizePerUnitInputName, ResourceSize.custom);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [disk, allowDiskInputUpdate, setValue]);
 
   useEffect(() => {
@@ -253,6 +273,7 @@ const ResourcesToggles = ({
     } else if (isMySQLSpecialMemory) {
       setValue(resourceSizePerUnitInputName, ResourceSize.small);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [memory, setValue]);
 
   return (
@@ -664,7 +685,7 @@ const ResourcesForm = ({
           dbType={dbType}
           dbVersion={dbVersion}
           options={NODES_DB_TYPE_MAP[dbType]}
-          sizeOptions={NODES_DEFAULT_SIZES(dbType, dbVersion)}
+          // sizeOptions={NODES_DEFAULT_SIZES(dbType, dbVersion)}
           resourceSizePerUnitInputName={DbWizardFormFields.resourceSizePerNode}
           cpuInputName={DbWizardFormFields.cpu}
           diskInputName={DbWizardFormFields.disk}

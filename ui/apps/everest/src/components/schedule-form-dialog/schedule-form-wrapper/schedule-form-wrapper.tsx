@@ -1,5 +1,6 @@
 // everest
 // Copyright (C) 2023 Percona LLC
+// Copyright (C) 2026 The OpenEverest Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -60,7 +61,7 @@ export const ScheduleFormWrapper = () => {
   useEffect(() => {
     // This allowed us to get an error from zod .superRefine to avoid duplication of checking the schedule with the same time
     trigger();
-  }, [amPm, hour, minute, onDay, weekDay, selectedTime]);
+  }, [amPm, hour, minute, onDay, weekDay, selectedTime, trigger]);
 
   useEffect(() => {
     if (mode === WizardMode.Edit && setSelectedScheduleName) {

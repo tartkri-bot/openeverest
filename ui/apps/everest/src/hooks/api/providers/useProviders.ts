@@ -24,6 +24,7 @@ export const useProviders = (
     queryKey: ['providers'],
     queryFn: () => getProvidersFn(),
     retry: 3,
+    refetchInterval: 10 * 1000,
     ...options,
   });
 };

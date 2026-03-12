@@ -1,5 +1,6 @@
 // everest
 // Copyright (C) 2023 Percona LLC
+// Copyright (C) 2026 The OpenEverest Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +13,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 
-import { AdvancedConfigurationFields } from 'components/cluster-form/advanced-configuration/advanced-configuration.types';
-import { DBVersionFields } from 'components/cluster-form/db-version/db-version.types';
 import { ImportFields } from 'components/cluster-form/import/import.types';
 import { BackupStatus } from 'shared-types/backups.types';
 
@@ -59,40 +58,14 @@ export const EVEREST_POLICY_IN_USE_FINALIZER =
 
 export enum DbWizardForm {
   dbName = 'dbName',
-  dbType = 'dbType',
+  provider = 'provider',
   k8sNamespace = 'k8sNamespace',
-  dbEnvironment = 'dbEnvironment',
-  storageClass = 'storageClass',
-  cpu = 'cpu',
-  proxyCpu = 'proxyCpu',
-  memory = 'memory',
-  proxyMemory = 'proxyMemory',
-  disk = 'disk',
-  // This is for retrocompatibility reasons, as some users still have Gb as a unit
-  diskUnit = 'diskUnit',
-  numberOfNodes = 'numberOfNodes',
-  numberOfProxies = 'numberOfProxies',
-  customNrOfNodes = 'customNrOfNodes',
-  customNrOfProxies = 'customNrOfProxies',
-  resourceSizePerNode = 'resourceSizePerNode',
-  resourceSizePerProxy = 'resourceSizePerProxy',
-  backupsEnabled = 'backupsEnabled',
-  schedules = 'schedules',
-  pitrEnabled = 'pitrEnabled',
-  pitrStorageLocation = 'pitrStorageLocation',
-  monitoring = 'monitoring',
-  monitoringInstance = 'monitoringInstance',
-  endpoint = 'endpoint',
-  sharding = 'sharding',
-  shardNr = 'shardNr',
-  shardConfigServers = 'shardConfigServers',
+  topology = 'topology.type',
 }
 
 export const DbWizardFormFields = {
   ...ImportFields,
   ...DbWizardForm,
-  ...DBVersionFields,
-  ...AdvancedConfigurationFields,
 };
 
 export const EKS_DEFAULT_LOAD_BALANCER_CONFIG = 'eks-default';

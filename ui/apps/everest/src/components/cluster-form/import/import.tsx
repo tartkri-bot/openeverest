@@ -1,5 +1,6 @@
 // everest
 // Copyright (C) 2023 Percona LLC
+// Copyright (C) 2026 The OpenEverest Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,7 +33,8 @@ import { useDbEngine, useDbEngines } from 'hooks';
 export const ImportForm = () => {
   const { getValues, watch, setValue } = useFormContext();
 
-  const dbType = dbTypeToDbEngine(getValues(DbWizardFormFields.dbType));
+  // TODO change the logic of import
+  const dbType = dbTypeToDbEngine(getValues(DbWizardFormFields.provider));
   const namespace = getValues(DbWizardFormFields.k8sNamespace);
   const selectedImporter = watch(DbWizardFormFields.dataImporter);
 

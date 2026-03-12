@@ -1,5 +1,6 @@
 // everest
 // Copyright (C) 2023 Percona LLC
+// Copyright (C) 2026 The OpenEverest Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,12 +16,10 @@
 import { StackProps, TypographyProps } from '@mui/material';
 
 export type DatabasePreviewProps = {
-  // zero indexed
-  activeStep: number;
-  longestAchievedStep: number;
-  onSectionEdit?: (order: number) => void;
+  activeStepId: string;
+  onSectionEdit?: (stepId: string) => void;
   disabled?: boolean;
-  stepsWithErrors: number[];
+  stepsWithErrors: string[];
 } & StackProps;
 
 export type PreviewSectionProps = {
