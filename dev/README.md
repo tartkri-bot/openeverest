@@ -26,7 +26,7 @@ NOTE: for MacOS tilt needs to have installed and runing `docker-desktop` tool. T
 ### 1. Set up k8s & registry   
 #### Option A: Local  
 ```sh
-k3d cluster create everest-dev --registry-create k3d-registry
+make k3d-cluster-up
 ```  
 #### Option B: Remote (GKE)  
 1. Setup your default gcloud project, e.g.  
@@ -110,7 +110,7 @@ tilt down
 
 2. Tear down local k8s cluster
 ```sh
-k3d cluster delete everest-dev
+make k3d-cluster-down
 ```
 
 ## Notes for frontend development
