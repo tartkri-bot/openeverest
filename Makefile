@@ -372,8 +372,7 @@ add-pxc-namespaces: ## Add PXC namespace to Everest using Everest CLI(usage: DB_
 
 .PHONY: expose
 expose:
-	kubectl patch svc -n everest-system everest --type=merge \
-	-p '{"spec": {"type": "NodePort", "ports": [{"name": "http", "port": 8080, "protocol": "TCP", "targetPort": 8080, "nodePort": 30080}]}}'
+	kubectl port-forward svc/everest 8080:8080 -n everest-system
 
 .PHONY: k3d-cluster-up
 k3d-cluster-up: ## Create a K8S cluster for testing.
