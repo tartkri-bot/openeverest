@@ -31,11 +31,11 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
-	cliutils "github.com/percona/everest/pkg/cli/utils"
-	"github.com/percona/everest/pkg/common"
-	"github.com/percona/everest/pkg/kubernetes"
-	"github.com/percona/everest/pkg/output"
-	"github.com/percona/everest/pkg/version"
+	cliutils "github.com/openeverest/openeverest/v2/pkg/cli/utils"
+	"github.com/openeverest/openeverest/v2/pkg/common"
+	"github.com/openeverest/openeverest/v2/pkg/kubernetes"
+	"github.com/openeverest/openeverest/v2/pkg/output"
+	"github.com/openeverest/openeverest/v2/pkg/version"
 )
 
 // StatusConfig holds the configuration for the `status` command.
